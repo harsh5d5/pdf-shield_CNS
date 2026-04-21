@@ -260,7 +260,6 @@ mvn spring-boot:run
 
 <div align="center">
 
-### 🛡️ Built with ❤️ for CNS Academic Project
 
 ![Stars](https://img.shields.io/github/stars/placeholder?style=social)
 
