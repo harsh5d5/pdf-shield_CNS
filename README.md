@@ -131,15 +131,7 @@
 
 ---
 
-## 🏗️ Architecture
 
-### Project Flow Diagram
-
-<div align="center">
-
-![Project Flow](docs/project_flow.png)
-
-</div>
 
 ### File Structure
 
