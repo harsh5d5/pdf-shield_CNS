@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Shield | Digital Signer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --bg: #0b1120;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 650px;
+            text-align: center;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: rgba(15, 23, 42, 0.5);
+            text-align: left;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .btn {
+            background: linear-gradient(to right, var(--secondary), var(--primary));
+            border: none; color: #0b0f1a;
+            padding: 14px 20px; border-radius: 10px;
+            font-weight: 600; cursor: pointer;
+            width: 100%; margin-top: 15px;
+            font-size: 1rem; transition: all 0.2s;
+        }
+
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 242, 254, 0.3); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .data-box {
+            background: #0f172a; padding: 12px; border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace; font-size: 0.85rem;
+            color: var(--primary); word-break: break-all;
+            max-height: 100px; overflow-y: auto; margin-top: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .drop-zone {
+            border: 2px dashed #4facfe; padding: 3rem; border-radius: 20px;
+            cursor: pointer; background: rgba(79, 172, 254, 0.03);
+            transition: all 0.3s; text-align: center;
+            display: block;
+        }
+
+        .drop-zone:hover { background: rgba(79, 172, 254, 0.08); border-color: var(--primary); transform: scale(1.01); }
+
+        #fileInput, #verifyInput { display: none; }
+
+        .name-input {
+            width: 100%; padding: 12px; border-radius: 10px;
+            border: 1px solid rgba(79, 172, 254, 0.2);
+            background: #0f172a; color: white;
+            font-family: 'Outfit', sans-serif;
+            margin-top: 10px; box-sizing: border-box;
+        }
+
+        .label { display: block; font-size: 0.8rem; color: #94a3b8; margin-top: 15px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .tab-container { display: flex; gap: 15px; margin-bottom: 2.5rem; }
+        .tab { 
+            padding: 12px 24px; border-radius: 12px; cursor: pointer; 
+            background: rgba(255,255,255,0.05); color: #94a3b8;
+            font-weight: 600; transition: all 0.3s;
+        }
+        .tab.active { background: linear-gradient(to right, var(--secondary), var(--primary)); color: #0b1120; box-shadow: 0 4px 14px 0 rgba(79, 172, 254, 0.39); }
+
+        .result-badge {
+            padding: 14px; border-radius: 12px; margin-top: 15px;
+            font-weight: 700; text-align: center; font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+        .result-badge.valid { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+        .result-badge.invalid { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .compare-card { padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); }
+        .hash-status { margin-top: 10px; font-size: 0.8rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <h1 style="margin-bottom: 5px; font-size: 2.5rem; letter-spacing: -1px; background: linear-gradient(to right, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">PDF Shield Pro</h1>
+    <p style="color: #64748b; margin-bottom: 40px; font-weight: 300;">Cryptography & Network Security Academic Tool</p>
+    
+    <div class="tab-container">
+        <div class="tab active" id="signTab" onclick="switchTab('sign')">Digital Signing</div>
+        <div class="tab" id="verifyTab" onclick="switchTab('verify')">Verification Analysis</div>
+    </div>
+
+    <!-- SIGN SECTION -->
+    <div class="container" id="signContainer">
+        <label for="fileInput" class="drop-zone" id="dropZone">
+            <span id="dropText" style="font-size: 1.1rem;">📁 Drop PDF to Sign</span>
+            <input type="file" id="fileInput" accept="application/pdf">
+        </label>
+
+        <div id="hashSection" style="display: none;">
+            <div class="section">
+                <span class="label">Step 1: Document Fingerprint (Hash)</span>
+                <div id="hashValue" class="data-box"></div>
+
+                <span class="label">Step 2: Authenticate as</span>
+                <input type="text" class="name-input" id="signerName" value="Authorized Signer">
+
+                <button class="btn" id="signBtn" onclick="signAndDownload()">Apply Digital Signature</button>
+            </div>
+            <div id="signSuccess" class="result-badge valid" style="display: none; margin-top: 20px;">
+                ✅ Signature Applied & Ready for Download
+            </div>
+        </div>
+    </div>
+
+    <!-- VERIFY SECTION -->
+    <div class="container" id="verifyContainer" style="display: none;">
+        <label for="verifyInput" class="drop-zone" id="verifyDropZone">
+            <span id="verifyText" style="font-size: 1.1rem;">🔍 Analyze Signed PDF</span>
+            <input type="file" id="verifyInput" accept="application/pdf">
+        </label>
+
+        <div id="verifyResult" style="display: none;">
+            <div id="verifyBadge" class="result-badge"></div>
+            
+            <!-- HASH COMPARISON SECTION -->
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <span class="label" style="margin-top:0">Stored Hash</span>
+                    <div id="resOriginalHash" class="data-box" style="font-size: 0.7rem; color: #fff;"></div>
+                    <div class="hash-status" style="color: var(--success)">✓ From Signature</div>
+                </div>
+                <div class="compare-card">
+                    <span class="label" style="margin-top:0">Calculated Hash</span>
+                    <div id="resFreshHash" class="data-box" style="font-size: 0.7rem; color: #fff;"></div>
+                    <div id="hashMatchResult" class="hash-status"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <span class="label">Document Details</span>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <div>
+                        <span style="font-size: 0.75rem; color: #64748b;">SIGNER</span>
+                        <div id="resSigner" style="font-weight: 600; font-size: 0.9rem;"></div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 0.75rem; color: #64748b;">TIMESTAMP</span>
+                        <div id="resDate" style="font-weight: 600; font-size: 0.9rem;"></div>
+                    </div>
+                </div>
+                <div id="resMessage" style="margin-top:15px; font-size: 0.85rem; color: #94a3b8;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            document.getElementById('signTab').className = 'tab ' + (tab === 'sign' ? 'active' : '');
+            document.getElementById('verifyTab').className = 'tab ' + (tab === 'verify' ? 'active' : '');
+            document.getElementById('signContainer').style.display = tab === 'sign' ? 'block' : 'none';
+            document.getElementById('verifyContainer').style.display = tab === 'verify' ? 'block' : 'none';
+        }
+
+        // SIGNING
+        document.getElementById('fileInput').onchange = async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            document.getElementById('dropText').innerText = '📄 ' + file.name;
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch('/api/pdf/hash', { method: 'POST', body: formData });
+            const data = await res.json();
+            document.getElementById('hashValue').innerText = data.hash;
+            document.getElementById('hashSection').style.display = 'block';
+        };
+
+        async function signAndDownload() {
+            const btn = document.getElementById('signBtn');
+            const fileInput = document.getElementById('fileInput');
+            const name = document.getElementById('signerName').value;
+            btn.disabled = true; btn.innerText = 'Encrypting & Sealing...';
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('signerName', name);
+            const res = await fetch('/api/pdf/sign-pdf', { method: 'POST', body: formData });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'SIGNED_' + fileInput.files[0].name;
+                document.body.appendChild(a); a.click();
+                document.getElementById('signSuccess').style.display = 'block';
+            }
+            btn.disabled = false; btn.innerText = 'Apply Digital Signature';
+        }
+
+        // VERIFICATION
+        document.getElementById('verifyInput').onchange = async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            document.getElementById('verifyText').innerText = '🧐 Decoding: ' + file.name;
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch('/api/pdf/verify-pdf', { method: 'POST', body: formData });
+            const data = await res.json();
+            
+            const badge = document.getElementById('verifyBadge');
+            badge.className = 'result-badge ' + (data.isValid ? 'valid' : 'invalid');
+            badge.innerText = data.isValid ? '✓ CERTIFICATE VERIFIED' : '⚠ INTEGRITY BREACH';
+            
+            // Hash Comparison UI
+            document.getElementById('resOriginalHash').innerText = data.originalHash || 'MISSING';
+            document.getElementById('resFreshHash').innerText = data.freshHash || 'ERROR';
+            
+            const matchStatus = document.getElementById('hashMatchResult');
+            if (data.isValid) {
+                matchStatus.innerText = '✓ Perfect Match';
+                matchStatus.style.color = 'var(--success)';
+            } else {
+                matchStatus.innerText = '✗ Mismatch Detected';
+                matchStatus.style.color = 'var(--danger)';
+            }
+
+            document.getElementById('resSigner').innerText = data.signerName || 'Unknown';
+            document.getElementById('resDate').innerText = data.signDate || '--';
+            document.getElementById('resMessage').innerText = data.message;
+            document.getElementById('verifyResult').style.display = 'block';
+        };
+    </script>
+</body>
+</html>
